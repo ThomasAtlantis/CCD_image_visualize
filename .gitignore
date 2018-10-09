@@ -1,0 +1,11 @@
+*.tmp
+*.TMP
+*.o
+*.hex
+*.obj
+OBJ/
+*.crf
+*.d
+*.htm
+*.map
+*.orig
