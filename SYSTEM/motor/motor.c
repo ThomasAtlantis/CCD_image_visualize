@@ -1,70 +1,104 @@
-#include "motor.h"
+#include "motor\motor.h"
 
-// left  B5 B7 
-// right B4 B6
+// right  B4 B5 
+// left B6 B7
 
-void motor_init()
-{
-	GPIO_InitTypeDef GPIO_InitStructure;
-	TIM_TimeBaseInitTypeDef  tim;
-	TIM_OCInitTypeDef        oc;
-	GPIO_InitTypeDef         gpio;
+void motor_init() {
+	TIM_TimeBaseInitTypeDef  tim_3, tim_4;
+	TIM_OCInitTypeDef        oc_a, oc_b;
+	GPIO_InitTypeDef         gpio_a, gpio_b;
+	
+	GPIO_InitTypeDef gpio_l, gpio_r;
 	
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB,ENABLE);
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);	
 	
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4 | GPIO_Pin_5;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-	GPIO_Init(GPIOB, &GPIO_InitStructure);
+	gpio_l.GPIO_Mode = GPIO_Mode_Out_PP;
+	gpio_l.GPIO_Pin = GPIO_Pin_9 | GPIO_Pin_5;
+	gpio_l.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOB, &gpio_l);
 
-	gpio.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;  // CH1  PB6,   CH2  PB7
-	gpio.GPIO_Mode = GPIO_Mode_AF_PP;
-	gpio.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOB, &gpio);
+	gpio_r.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
+	gpio_r.GPIO_Mode = GPIO_Mode_Out_PP;
+	gpio_r.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOB, &gpio_r);
     
-	tim.TIM_Period=19999;    //arr             Fpwm=72M/((arr+1)*(psc+1))
-	tim.TIM_Prescaler=71;   //psc             duty circle= TIMx->CCRx/arr
-	tim.TIM_ClockDivision=TIM_CKD_DIV1;
-	tim.TIM_CounterMode=TIM_CounterMode_Up;
-	TIM_TimeBaseInit(TIM4, &tim);
+	RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOA, ENABLE);
+	RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOB, ENABLE);
+	RCC_APB1PeriphClockCmd( RCC_APB1Periph_TIM3, ENABLE);	
+	RCC_APB1PeriphClockCmd( RCC_APB1Periph_TIM4, ENABLE);	
+
+	//A6 pwm_a
+	gpio_a.GPIO_Pin = GPIO_Pin_6;
+	gpio_a.GPIO_Mode = GPIO_Mode_AF_PP;
+	gpio_a.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOA, &gpio_a);
+
+	//B8 pwm_b
+	gpio_b.GPIO_Pin = GPIO_Pin_8;
+	gpio_b.GPIO_Mode = GPIO_Mode_AF_PP;
+	gpio_b.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOB, &gpio_b);
+
+	tim_3.TIM_Period = 9999;
+	tim_3.TIM_Prescaler = 71;
+	tim_3.TIM_ClockDivision = TIM_CKD_DIV1;
+	tim_3.TIM_CounterMode=TIM_CounterMode_Up;
+	TIM_TimeBaseInit(TIM3, &tim_3);
 	
-	oc.TIM_OCMode = TIM_OCMode_PWM2;
-	oc.TIM_OutputState = TIM_OutputState_Enable;
-	oc.TIM_OutputNState = TIM_OutputNState_Disable;
-	oc.TIM_Pulse = 0;
-	oc.TIM_OCPolarity = TIM_OCPolarity_High;
-	oc.TIM_OCNPolarity = TIM_OCPolarity_Low;
-	oc.TIM_OCIdleState = TIM_OCIdleState_Reset;
-	oc.TIM_OCNIdleState = TIM_OCIdleState_Reset;
-	TIM_OC1Init(TIM4, &oc);
-	TIM_OC2Init(TIM4, &oc);
+	tim_4.TIM_Period = 9999;
+	tim_4.TIM_Prescaler = 71;
+	tim_4.TIM_ClockDivision = TIM_CKD_DIV1;
+	tim_4.TIM_CounterMode=TIM_CounterMode_Up;
+	TIM_TimeBaseInit(TIM4, &tim_4);
+	
+	oc_a.TIM_OCMode = TIM_OCMode_PWM1;
+	oc_a.TIM_OutputState = TIM_OutputState_Enable;
+	oc_a.TIM_OutputNState = TIM_OutputNState_Disable;
+	oc_a.TIM_Pulse = 0;
+	oc_a.TIM_OCPolarity = TIM_OCPolarity_High;
+	oc_a.TIM_OCNPolarity = TIM_OCPolarity_Low;
+	oc_a.TIM_OCIdleState = TIM_OCIdleState_Reset;
+	oc_a.TIM_OCNIdleState = TIM_OCIdleState_Reset;
+	TIM_OC1Init(TIM3, &oc_a);
+	
+	oc_b.TIM_OCMode = TIM_OCMode_PWM1;
+	oc_b.TIM_OutputState = TIM_OutputState_Enable;
+	oc_b.TIM_OutputNState = TIM_OutputNState_Disable;
+	oc_b.TIM_Pulse = 0;
+	oc_b.TIM_OCPolarity = TIM_OCPolarity_High;
+	oc_b.TIM_OCNPolarity = TIM_OCPolarity_Low;
+	oc_b.TIM_OCIdleState = TIM_OCIdleState_Reset;
+	oc_b.TIM_OCNIdleState = TIM_OCIdleState_Reset;
+	TIM_OC3Init(TIM4, &oc_b);
+	
+	TIM_ARRPreloadConfig(TIM3, ENABLE);
+	TIM_CtrlPWMOutputs(TIM3,ENABLE);
+	TIM_Cmd(TIM3, ENABLE);
 	
 	TIM_ARRPreloadConfig(TIM4, ENABLE);
-    
 	TIM_CtrlPWMOutputs(TIM4,ENABLE);
-
 	TIM_Cmd(TIM4, ENABLE);
-	GPIO_ResetBits(GPIOB, GPIO_Pin_4 | GPIO_Pin_5);
+	TIM3->CCR1 = 6999;
+	TIM4->CCR3 = 6999;
 }
 
-void set_left_speed(float percent) {
-	percent = 1 - percent;
-	TIM4 -> CCR2 = percent * 19999;
+void move_forward() {
+	GPIO_SetBits(GPIOB, GPIO_Pin_9);      //9 1
+	GPIO_ResetBits(GPIOB, GPIO_Pin_5);    //5 0
+	GPIO_SetBits(GPIOB, GPIO_Pin_6);      //6 1
+	GPIO_ResetBits(GPIOB, GPIO_Pin_7);    //7 0
 }
 
-void set_right_speed(float percent) {
-	percent = 1 - percent;
-	TIM4 -> CCR1 = percent * 19999;
+void move_backward() {
+	GPIO_ResetBits(GPIOB, GPIO_Pin_9);    //9 0
+	GPIO_SetBits(GPIOB, GPIO_Pin_5);      //5 1
+	GPIO_ResetBits(GPIOB, GPIO_Pin_6);    //6 0
+	GPIO_SetBits(GPIOB, GPIO_Pin_7);      //7 1
 }
 
-void motor_forward() {
-	set_left_speed(1);
-	set_right_speed(1);
-}
-
-
-void motor_stop() {
-	set_left_speed(0);
-	set_right_speed(0);
+void stop() {
+	GPIO_ResetBits(GPIOB, GPIO_Pin_9);
+	GPIO_ResetBits(GPIOB, GPIO_Pin_5);
+	GPIO_ResetBits(GPIOB, GPIO_Pin_6);
+	GPIO_ResetBits(GPIOB, GPIO_Pin_7);
 }
